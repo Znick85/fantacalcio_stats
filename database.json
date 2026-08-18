@@ -1,5 +1,5 @@
 {
-  "versione_database": "2026-2027-v14",
+  "versione_database": "2026-2027-v15",
   "aggiornato_al": "2026-08-18",
   "giocatori": [
     {
@@ -15498,6 +15498,88 @@
       "nome": "GOAL",
       "url": "https://www.goal.com/it/",
       "uso": "formazioni, consigli, infortuni"
+    }
+  },
+  "legenda_ruoli_tattici": {
+    "portiere": {
+      "categoria": "Portiere",
+      "descrizione": "Estremo difensore della squadra. Protegge la porta e può partecipare all'impostazione dal basso."
+    },
+    "terzino destro": {
+      "categoria": "Difesa",
+      "descrizione": "Difensore esterno sulla fascia destra in una difesa a 4, con compiti difensivi e di spinta."
+    },
+    "terzino sinistro": {
+      "categoria": "Difesa",
+      "descrizione": "Difensore esterno sulla fascia sinistra in una difesa a 4, con compiti difensivi e di spinta."
+    },
+    "centrale difensivo": {
+      "categoria": "Difesa",
+      "descrizione": "Difensore centrale incaricato di proteggere la zona centrale e contrastare le punte avversarie."
+    },
+    "braccetto destro": {
+      "categoria": "Difesa",
+      "descrizione": "Centrale di destra in una difesa a 3, con possibilità di allargarsi e accompagnare l'azione."
+    },
+    "braccetto sinistro": {
+      "categoria": "Difesa",
+      "descrizione": "Centrale di sinistra in una difesa a 3, con possibilità di allargarsi e accompagnare l'azione."
+    },
+    "quinto destro": {
+      "categoria": "Difesa",
+      "descrizione": "Esterno destro in un sistema a tre difensori, impegnato sia in fase difensiva sia offensiva."
+    },
+    "quinto sinistro": {
+      "categoria": "Difesa",
+      "descrizione": "Esterno sinistro in un sistema a tre difensori, impegnato sia in fase difensiva sia offensiva."
+    },
+    "esterno destro": {
+      "categoria": "Attacco",
+      "descrizione": "Giocatore offensivo largo a destra, coinvolto nella costruzione e nella rifinitura."
+    },
+    "esterno sinistro": {
+      "categoria": "Attacco",
+      "descrizione": "Giocatore offensivo largo a sinistra, coinvolto nella costruzione e nella rifinitura."
+    },
+    "ala destra": {
+      "categoria": "Attacco",
+      "descrizione": "Attaccante largo a destra che cerca superiorità, uno contro uno, cross o conclusione accentrandosi."
+    },
+    "ala sinistra": {
+      "categoria": "Attacco",
+      "descrizione": "Attaccante largo a sinistra che cerca superiorità, uno contro uno, cross o conclusione accentrandosi."
+    },
+    "mediano": {
+      "categoria": "Centrocampo",
+      "descrizione": "Centrocampista davanti alla difesa, con compiti di equilibrio, recupero palla e protezione della squadra."
+    },
+    "regista": {
+      "categoria": "Centrocampo",
+      "descrizione": "Centrocampista che costruisce il gioco e detta tempi e direzione della manovra."
+    },
+    "mezzala": {
+      "categoria": "Centrocampo",
+      "descrizione": "Centrocampista interno con libertà di movimento e inserimento, attivo in entrambe le fasi."
+    },
+    "trequartista": {
+      "categoria": "Centrocampo",
+      "descrizione": "Giocatore offensivo tra centrocampo e attacco, generalmente alle spalle della punta, deputato a rifinire e creare occasioni."
+    },
+    "trequartista/esterno": {
+      "categoria": "Centrocampo/Attacco",
+      "descrizione": "Giocatore offensivo capace di agire alle spalle della punta oppure largo sulla fascia."
+    },
+    "trequartista/seconda punta": {
+      "categoria": "Attacco",
+      "descrizione": "Giocatore offensivo capace di agire da trequartista o vicino alla punta come seconda punta."
+    },
+    "seconda punta": {
+      "categoria": "Attacco",
+      "descrizione": "Attaccante vicino alla punta centrale, con maggiore libertà di movimento, arretramento e inserimento."
+    },
+    "punta centrale": {
+      "categoria": "Attacco",
+      "descrizione": "Attaccante più avanzato e centrale, generalmente principale riferimento offensivo della squadra."
     }
   }
 }
