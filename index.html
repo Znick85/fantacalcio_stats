@@ -25,6 +25,10 @@ th{position:sticky;top:0;background:#f8fafc;cursor:pointer;font-size:12px;text-t
 .top{background:#ede9fe;color:#6d28d9}.good{background:#dcfce7;color:#166534}.interesting{background:#e0f2fe;color:#075985}.bet{background:#ffedd5;color:#9a3412}
 .r1{background:#fef3c7;color:#92400e}.r2{background:#e0e7ff;color:#3730a3}.none{background:#f1f5f9;color:#64748b}
 .ok{color:#15803d}.err{color:#b91c1c}.empty{text-align:center;padding:30px;color:var(--muted)}
+#faqBody{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.faq-item{border:1px solid var(--line);border-radius:9px;padding:9px;background:#f8fafc}
+.faq-item strong{color:var(--text)}
+@media(max-width:800px){#faqBody{grid-template-columns:1fr}}
 @media(max-width:1100px){.stats{grid-template-columns:repeat(3,1fr)}.filters{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:650px){.wrap{padding:12px}.stats{grid-template-columns:1fr 1fr}.filters{grid-template-columns:1fr}}
 </style>
@@ -60,9 +64,16 @@ th{position:sticky;top:0;background:#f8fafc;cursor:pointer;font-size:12px;text-t
 <select id="titolarita"><option value="">Tutte le titolarità</option></select>
 <select id="tacticalRole"><option value="">Tutti i ruoli tattici</option></select>
 <select id="situation"><option value="">Tutte le situazioni</option></select>
-<select id="penalty"><option value="">Tutti i rigoristi</option><option value="1">⚽ Principale</option><option value="2">🥈 Secondo</option><option value="none">— Non indicato</option></select>
+<select id="penalty"><option value="">Tutti i rigoristi</option><option value="1">⚽ Primo</option><option value="2">🥈 Secondo</option><option value="3">🥉 Terzo</option><option value="none">— Non indicato</option></select>
 <div style="display:flex;gap:8px"><input id="min" type="number" min="0" placeholder="Val. min"><input id="max" type="number" min="0" placeholder="Val. max"></div>
 </div>
+</section>
+
+<section class="panel">
+<details id="tacticalFaq">
+<summary><strong>Legenda / FAQ ruoli tattici</strong> <span id="faqCount" class="muted"></span></summary>
+<div id="faqBody" class="muted" style="margin-top:12px"></div>
+</details>
 </section>
 
 <section class="panel">
@@ -97,8 +108,11 @@ async function loadDB(){
  try{
   const r=await fetch("./database.json?"+Date.now(),{cache:"no-store"});
   if(!r.ok)throw new Error("database.json non trovato nella stessa cartella.");
-  players=normalize(await r.json());
+  const raw=await r.json();
+  window.__databaseMeta=(raw&&typeof raw==="object"&&!Array.isArray(raw))?raw:{};
+  players=normalize(raw);
   buildFilters();
+  renderTacticalFaq();
   status("database.json caricato — "+players.length.toLocaleString("it-IT")+" giocatori");
   apply();
  }catch(e){status(e.message,false);$("tbody").innerHTML="";}
@@ -116,6 +130,24 @@ function buildFilters(){
   vals.sort((a,b)=>String(a).localeCompare(String(b))).forEach(v=>{o=document.createElement("option");o.value=v;o.textContent=v;el.appendChild(o);});
   if(vals.includes(old))el.value=old;
  }
+}
+function renderTacticalFaq(){
+ const legend = (window.__databaseMeta && window.__databaseMeta.legenda_ruoli_tattici) || {};
+ const entries = Object.entries(legend);
+ const body = $("faqBody"), count = $("faqCount");
+ if(!entries.length){
+   body.innerHTML = '<div class="muted">Legenda ruoli tattici non disponibile nel database.</div>';
+   count.textContent = "";
+   return;
+ }
+ count.textContent = "("+entries.length+" ruoli)";
+ body.innerHTML = entries.map(([name,info])=>{
+   const cat=info&&info.categoria?String(info.categoria):"";
+   const desc=info&&info.descrizione?String(info.descrizione):"";
+   return '<div class="faq-item"><strong>'+esc(name.charAt(0).toUpperCase()+name.slice(1))+'</strong>'
+     +(cat?' <span class="muted">· '+esc(cat)+'</span>':'')
+     +(desc?'<div style="margin-top:4px">'+esc(desc)+'</div>':'')+'</div>';
+ }).join("");
 }
 function role(v){return '<span class="badge '+String(v||"").toLowerCase()+'">'+esc(v||"—")+'</span>'}
 function rec(v){if(!v)return"—";let c=v.includes("Top")?"top":v.includes("Da prendere")?"good":v.includes("Interessante")?"interesting":v.includes("Scommessa")?"bet":"";return'<span class="badge '+c+'">'+esc(v)+'</span>'}
