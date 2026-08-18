@@ -57,6 +57,8 @@ th{position:sticky;top:0;background:#f8fafc;cursor:pointer;font-size:12px;text-t
 <select id="role"><option value="">Tutti i ruoli</option></select>
 <select id="team"><option value="">Tutte le squadre</option></select>
 <select id="recommendation"><option value="">Tutti i consigli</option></select>
+<select id="titolarita"><option value="">Tutte le titolarità</option></select>
+<select id="tacticalRole"><option value="">Tutti i ruoli tattici</option></select>
 <select id="situation"><option value="">Tutte le situazioni</option></select>
 <select id="penalty"><option value="">Tutti i rigoristi</option><option value="1">⚽ Principale</option><option value="2">🥈 Secondo</option><option value="none">— Non indicato</option></select>
 <div style="display:flex;gap:8px"><input id="min" type="number" min="0" placeholder="Val. min"><input id="max" type="number" min="0" placeholder="Val. max"></div>
@@ -68,8 +70,10 @@ th{position:sticky;top:0;background:#f8fafc;cursor:pointer;font-size:12px;text-t
 <label class="muted">Mostra <select id="size"><option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="99999">Tutti</option></select></label></div>
 <div class="table-wrap"><table><thead><tr>
 <th data-sort="ruolo">Ruolo ↕</th><th data-sort="nome">Giocatore ↕</th><th data-sort="squadra">Squadra ↕</th>
-<th data-sort="valuazione">Valutazione ↕</th><th data-sort="titolare_stagione">Titolare stagione ↕</th>
+<th data-sort="valuazione">Valutazione ↕</th><th data-sort="titolarita">Titolarità ↕</th>
+<th data-sort="titolare_stagione">Titolare stagione ↕</th>
 <th data-sort="situazione_1a_giornata">1ª giornata ↕</th><th data-sort="consiglio">Consiglio ↕</th>
+<th data-sort="ruolo_effettivo_principale">Ruolo tattico ↕</th>
 <th data-sort="rigorista">Rigorista ↕</th><th>Nota</th><th>Fonti</th>
 </tr></thead><tbody id="tbody"></tbody></table><div id="empty" class="empty" hidden>Nessun risultato.</div></div>
 </section>
@@ -103,6 +107,8 @@ function buildFilters(){
  const defs={role:["Tutti i ruoli",[...new Set(players.map(p=>p.ruolo).filter(Boolean))]],
  team:["Tutte le squadre",[...new Set(players.map(p=>p.squadra).filter(Boolean))]],
  recommendation:["Tutti i consigli",[...new Set(players.map(p=>p.consiglio).filter(Boolean))]],
+ titolarita:["Tutte le titolarità",[...new Set(players.map(p=>p.titolarita).filter(Boolean))]],
+ tacticalRole:["Tutti i ruoli tattici",[...new Set(players.map(p=>p.ruolo_effettivo_principale).filter(Boolean))]],
  situation:["Tutte le situazioni",[...new Set(players.map(p=>p.titolare_stagione).filter(Boolean))]]};
  for(const[id,[label,vals]]of Object.entries(defs)){
   const el=$(id),old=el.value;el.innerHTML="";
@@ -113,13 +119,36 @@ function buildFilters(){
 }
 function role(v){return '<span class="badge '+String(v||"").toLowerCase()+'">'+esc(v||"—")+'</span>'}
 function rec(v){if(!v)return"—";let c=v.includes("Top")?"top":v.includes("Da prendere")?"good":v.includes("Interessante")?"interesting":v.includes("Scommessa")?"bet":"";return'<span class="badge '+c+'">'+esc(v)+'</span>'}
+function displayRoleTactical(v){
+ if(v==null||v==="")return"Ruolo tattico: Non disponibile";
+ return"Ruolo tattico: "+String(v).charAt(0).toUpperCase()+String(v).slice(1);
+}
+function tacticalInfo(p){
+ const main=displayRoleTactical(p.ruolo_effettivo_principale);
+ const secondary=Array.isArray(p.ruoli_effettivi_secondari)?p.ruoli_effettivi_secondari.filter(Boolean):[];
+ let out=main;
+ if(secondary.length)out+="<br><span class=\"muted\">Alternative: "+secondary.map(v=>esc(String(v).charAt(0).toUpperCase()+String(v).slice(1))).join(", ")+"</span>";
+ if(p.ruolo_effettivo_confidenza!=null&&p.ruolo_effettivo_confidenza!==""){
+   out+="<br><span class=\"muted\">Confidenza: "+esc(p.ruolo_effettivo_confidenza)+"</span>";
+ }
+ const u=p.fonti&&p.fonti.ruolo_effettivo;
+ if(typeof u==="string"&&/^https?:\/\//i.test(u)){
+   out+=' <a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">[Fonte ruolo tattico]</a>';
+ }
+ return out;
+}
 function pen(v){if(Number(v)===1)return'<span class="badge r1">⚽ Principale</span>';if(Number(v)===2)return'<span class="badge r2">🥈 Secondo</span>';return'<span class="badge none">—</span>'}
 function apply(){
- const q=$("search").value.trim().toLowerCase(),ro=$("role").value,te=$("team").value,re=$("recommendation").value,si=$("situation").value,pe=$("penalty").value,min=parseFloat($("min").value),max=parseFloat($("max").value);
+ const q=$("search").value.trim().toLowerCase(),ro=$("role").value,te=$("team").value,re=$("recommendation").value,
+ tit=$("titolarita").value,tr=$("tacticalRole").value,si=$("situation").value,pe=$("penalty").value,
+ min=parseFloat($("min").value),max=parseFloat($("max").value);
  filtered=players.filter(p=>{
-  const hay=[p.nome,p.squadra,p.ruolo,p.consiglio,p.titolare_stagione,p.situazione_1a_giornata,p.nota].join(" ").toLowerCase(),v=Number(p.valuazione),r=p.rigorista;
+  const hay=[p.nome,p.squadra,p.ruolo,p.consiglio,p.titolarita,p.titolare_stagione,p.situazione_1a_giornata,p.nota,p.ruolo_effettivo_principale,...(Array.isArray(p.ruoli_effettivi_secondari)?p.ruoli_effettivi_secondari:[])].join(" ").toLowerCase();
+  const v=Number(p.valuazione),r=p.rigorista;
   const pk=!pe||(pe==="none"?(r==null||r===""):String(r)===pe);
-  return(!q||hay.includes(q))&&(!ro||p.ruolo===ro)&&(!te||p.squadra===te)&&(!re||p.consiglio===re)&&(!si||p.titolare_stagione===si)&&pk&&(isNaN(min)||v>=min)&&(isNaN(max)||v<=max);
+  return(!q||hay.includes(q))&&(!ro||p.ruolo===ro)&&(!te||p.squadra===te)&&(!re||p.consiglio===re)&&
+   (!tit||p.titolarita===tit)&&(!tr||p.ruolo_effettivo_principale===tr)&&(!si||p.titolare_stagione===si)&&
+   pk&&(isNaN(min)||v>=min)&&(isNaN(max)||v<=max);
  });
  sort();render();
 }
@@ -143,17 +172,17 @@ function sourceLinks(fonti){
 }
 function render(){
  const rows=filtered.slice(0,pageSize);
- $("tbody").innerHTML=rows.map(p=>'<tr><td>'+role(p.ruolo)+'</td><td class="name">'+esc(p.nome)+'</td><td>'+esc(p.squadra)+'</td><td><strong>'+esc(p.valuazione)+'</strong></td><td>'+esc(p.titolare_stagione||"—")+'</td><td>'+esc(p.situazione_1a_giornata||"—")+'</td><td>'+rec(p.consiglio)+'</td><td>'+pen(p.rigorista)+'</td><td class="note">'+esc(p.nota||"")+'</td><td class="note">'+sourceLinks(p.fonti)+'</td></tr>').join("");
+ $("tbody").innerHTML=rows.map(p=>'<tr><td>'+role(p.ruolo)+'</td><td class="name">'+esc(p.nome)+'</td><td>'+esc(p.squadra)+'</td><td><strong>'+esc(p.valuazione)+'</strong></td><td>'+esc(p.titolarita||"—")+'</td><td>'+esc(p.titolare_stagione||"—")+'</td><td>'+esc(p.situazione_1a_giornata||"—")+'</td><td>'+rec(p.consiglio)+'</td><td class="note">'+tacticalInfo(p)+'</td><td>'+pen(p.rigorista)+'</td><td class="note">'+esc(p.nota||"")+'</td><td class="note">'+sourceLinks(p.fonti)+'</td></tr>').join("");
  $("empty").hidden=rows.length!==0;$("count").textContent=filtered.length.toLocaleString("it-IT")+" risultati";$("total").textContent=filtered.length.toLocaleString("it-IT");
  const vals=filtered.map(p=>Number(p.valuazione)).filter(Number.isFinite);$("avg").textContent=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):"—";
- $("starters").textContent=filtered.filter(p=>p.titolare_stagione==="probabile titolare").length.toLocaleString("it-IT");
+ $("starters").textContent=filtered.filter(p=>p.titolarita==="titolare probabile").length.toLocaleString("it-IT");
  $("recommended").textContent=filtered.filter(p=>p.consiglio).length.toLocaleString("it-IT");
  $("rigoristi").textContent=filtered.filter(p=>Number(p.rigorista)===1).length.toLocaleString("it-IT");
 }
 $("reload").onclick=loadDB;
-["search","role","team","recommendation","situation","penalty","min","max"].forEach(id=>$(id).addEventListener("input",apply));
+["search","role","team","recommendation","titolarita","tacticalRole","situation","penalty","min","max"].forEach(id=>$(id).addEventListener("input",apply));
 $("size").onchange=e=>{pageSize=Number(e.target.value);render()};
-$("reset").onclick=()=>{["search","min","max"].forEach(id=>$(id).value="");["role","team","recommendation","situation","penalty"].forEach(id=>$(id).value="");$("size").value="25";pageSize=25;apply()};
+$("reset").onclick=()=>{["search","min","max"].forEach(id=>$(id).value="");["role","team","recommendation","titolarita","tacticalRole","situation","penalty"].forEach(id=>$(id).value="");$("size").value="25";pageSize=25;apply()};
 document.querySelectorAll("th[data-sort]").forEach(th=>th.onclick=()=>{let k=th.dataset.sort;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1}sort();render()});
 loadDB();
 </script>

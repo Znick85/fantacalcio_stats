@@ -1,13 +1,3 @@
-FANTACALCIO — RENDER
-
-Repository root:
-- index.html
-- database.json
-
-Render Static Site:
-Root Directory: vuoto
-Build Command: vuoto
-Publish Directory: .
-
-Aggiornamento:
-sostituisci database.json, fai commit/push su GitHub e Render pubblicherà il nuovo database.
+Render: Root Directory vuoto; Build Command vuoto; Publish Directory .
+File root: index.html + database.json.
+Database: v14 (copiato senza modifiche).
