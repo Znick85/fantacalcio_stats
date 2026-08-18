@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Fantacalcio — Analizzatore</title>
+<title>Fantacalcio — Analizzatore v9</title>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#687386;--line:#e3e8f0;--accent:#2563eb}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -30,7 +30,7 @@ th{position:sticky;top:0;background:#f8fafc;cursor:pointer;font-size:12px;text-t
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1>⚽ Fantacalcio 2026/27 — Analizzatore</h1>
+<header><div class="wrap"><h1>⚽ Fantacalcio 2026/27 — Analizzatore v9</h1>
 <p>Il database è esterno: questo HTML legge <strong>database.json</strong>.</p></div></header>
 <main class="wrap">
 
@@ -39,7 +39,7 @@ th{position:sticky;top:0;background:#f8fafc;cursor:pointer;font-size:12px;text-t
 <div><strong>Database esterno</strong><div id="status" class="muted">Lettura di database.json…</div></div>
 <div><button id="reload" class="primary">↻ Ricarica database.json</button></div>
 </div>
-<div class="muted">Per aggiornare i dati, sostituisci semplicemente <strong>database.json</strong> nella stessa cartella e premi “Ricarica”.</div>
+<div class="muted">Per aggiornare i dati, sostituisci semplicemente <strong>database.json</strong> nella stessa cartella e premi “Ricarica”.</div><div class="muted" style="margin-top:6px">Le fonti presenti nel JSON sono cliccabili nella colonna <strong>Fonti</strong>.</div>
 </section>
 
 <section class="stats">
@@ -70,7 +70,7 @@ th{position:sticky;top:0;background:#f8fafc;cursor:pointer;font-size:12px;text-t
 <th data-sort="ruolo">Ruolo ↕</th><th data-sort="nome">Giocatore ↕</th><th data-sort="squadra">Squadra ↕</th>
 <th data-sort="valuazione">Valutazione ↕</th><th data-sort="titolare_stagione">Titolare stagione ↕</th>
 <th data-sort="situazione_1a_giornata">1ª giornata ↕</th><th data-sort="consiglio">Consiglio ↕</th>
-<th data-sort="rigorista">Rigorista ↕</th><th>Nota / fonte</th>
+<th data-sort="rigorista">Rigorista ↕</th><th>Nota</th><th>Fonti</th>
 </tr></thead><tbody id="tbody"></tbody></table><div id="empty" class="empty" hidden>Nessun risultato.</div></div>
 </section>
 </main>
@@ -91,7 +91,7 @@ function status(t,ok=true){$("status").textContent=t;$("status").className="mute
 async function loadDB(){
  status("Lettura di database.json…");
  try{
-  const r=await fetch("database.json?"+Date.now(),{cache:"no-store"});
+  const r=await fetch("./database.json?"+Date.now(),{cache:"no-store"});
   if(!r.ok)throw new Error("database.json non trovato nella stessa cartella.");
   players=normalize(await r.json());
   buildFilters();
@@ -126,9 +126,24 @@ function apply(){
 function sort(){
  filtered.sort((a,b)=>{let x=a[sortKey],y=b[sortKey];if(sortKey==="valuazione"||sortKey==="rigorista"){x=Number(x)||0;y=Number(y)||0}else{x=String(x??"").toLowerCase();y=String(y??"").toLowerCase()}return(x<y?-1:x>y?1:0)*sortDir});
 }
+function sourceLinks(fonti){
+ const urls=[];
+ if(fonti&&typeof fonti==="object"){
+  for(const [key,val] of Object.entries(fonti)){
+   const vals=Array.isArray(val)?val:[val];
+   vals.forEach(u=>{if(typeof u==="string"&&/^https?:\/\//i.test(u))urls.push([key,u])});
+  }
+ }
+ const seen=new Set(), unique=urls.filter(x=>!seen.has(x[1])&&seen.add(x[1]));
+ if(!unique.length)return "—";
+ return unique.map(([key,u],i)=>{
+   const label=key==="generali"?"Fonte":key==="titolare"?"Titolare":key==="indisponibilita"?"Indisponibilità":key;
+   return '<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" title="'+esc(u)+'">'+esc(label)+(unique.length>1?" "+(i+1):"")+'</a>';
+ }).join(" · ");
+}
 function render(){
  const rows=filtered.slice(0,pageSize);
- $("tbody").innerHTML=rows.map(p=>'<tr><td>'+role(p.ruolo)+'</td><td class="name">'+esc(p.nome)+'</td><td>'+esc(p.squadra)+'</td><td><strong>'+esc(p.valuazione)+'</strong></td><td>'+esc(p.titolare_stagione||"—")+'</td><td>'+esc(p.situazione_1a_giornata||"—")+'</td><td>'+rec(p.consiglio)+'</td><td>'+pen(p.rigorista)+'</td><td class="note">'+esc(p.nota||"")+'</td></tr>').join("");
+ $("tbody").innerHTML=rows.map(p=>'<tr><td>'+role(p.ruolo)+'</td><td class="name">'+esc(p.nome)+'</td><td>'+esc(p.squadra)+'</td><td><strong>'+esc(p.valuazione)+'</strong></td><td>'+esc(p.titolare_stagione||"—")+'</td><td>'+esc(p.situazione_1a_giornata||"—")+'</td><td>'+rec(p.consiglio)+'</td><td>'+pen(p.rigorista)+'</td><td class="note">'+esc(p.nota||"")+'</td><td class="note">'+sourceLinks(p.fonti)+'</td></tr>').join("");
  $("empty").hidden=rows.length!==0;$("count").textContent=filtered.length.toLocaleString("it-IT")+" risultati";$("total").textContent=filtered.length.toLocaleString("it-IT");
  const vals=filtered.map(p=>Number(p.valuazione)).filter(Number.isFinite);$("avg").textContent=vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):"—";
  $("starters").textContent=filtered.filter(p=>p.titolare_stagione==="probabile titolare").length.toLocaleString("it-IT");
